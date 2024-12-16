@@ -18,7 +18,7 @@ name: publish-docker
 
 on:
   push:
-    tags:
+    branches:
       - '*'
     paths-ignore:
       - 'docs/**'
@@ -30,7 +30,7 @@ env:
 
 jobs:
   build:
-    if: github.repository == 'apache/seatunnel'
+    if: github.repository == 'duanfangwei/seatunnel'
     runs-on: ubuntu-latest
     permissions:
       contents: read

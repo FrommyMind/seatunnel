@@ -30,7 +30,7 @@ env:
 
 jobs:
   build:
-    if: github.repository == 'duanfangwei/seatunnel'
+    if: github.repository == 'frommymind/seatunnel'
     runs-on: ubuntu-latest
     permissions:
       contents: read

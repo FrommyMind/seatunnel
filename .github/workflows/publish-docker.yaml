@@ -80,3 +80,6 @@ jobs:
           -Dmaven.deploy.skip \
           --no-snapshot-updates \
           -Pdocker,seatunnel
+        continue-on-error: true
+      - name: check disk usage
+        run: df -h /home/runner/runners/*

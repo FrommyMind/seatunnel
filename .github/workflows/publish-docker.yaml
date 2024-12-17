@@ -80,3 +80,4 @@ jobs:
           -Dmaven.deploy.skip \
           --no-snapshot-updates \
           -Pdocker,seatunnel
+          

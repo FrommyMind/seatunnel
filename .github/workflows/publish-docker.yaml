@@ -31,7 +31,7 @@ env:
 jobs:
   build:
     if: github.repository == 'frommymind/seatunnel'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       packages: write

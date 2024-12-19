@@ -18,7 +18,7 @@ name: publish-docker
 
 on:
   push:
-    tags:
+    branches:
       - '*'
     paths-ignore:
       - 'docs/**'
@@ -30,7 +30,7 @@ env:
 
 jobs:
   build:
-    if: github.repository == 'apache/seatunnel'
+    if: github.repository == 'frommymind/seatunnel'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,6 +89,7 @@ jobs:
           -D"docker.build.skip"=false \
           -D"docker.verify.skip"=false \
           -D"docker.push.skip"=false \
+          -D"docker.hub"=duanfangwei \
           -D"skip.spotless"=true \
           -Dmaven.deploy.skip \
           --no-snapshot-updates \

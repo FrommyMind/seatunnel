@@ -83,7 +83,8 @@ public class RedisConfig {
             Options.key("output_key")
                     .stringType()
                     .noDefaultValue()
-                    .withDescription("The key column name. If not set will not output key as a new column.");
+                    .withDescription(
+                            "The key column name. If not set will not output key as a new column.");
 
     public static final Option<RedisDataType> DATA_TYPE =
             Options.key("data_type")

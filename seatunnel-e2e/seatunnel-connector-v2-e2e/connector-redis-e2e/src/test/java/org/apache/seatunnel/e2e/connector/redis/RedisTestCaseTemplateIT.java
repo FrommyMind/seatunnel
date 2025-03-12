@@ -230,6 +230,41 @@ public abstract class RedisTestCaseTemplateIT extends TestSuiteBase implements T
     }
 
     @TestTemplate
+    public void testRedisWithOutputKey(TestContainer container)
+            throws IOException, InterruptedException {
+        Container.ExecResult execResult =
+                container.executeJob("/redis-with-output-key-to-redis.conf");
+        Assertions.assertEquals(0, execResult.getExitCode());
+        Assertions.assertEquals(100, jedis.llen("key_list"));
+        List<String> keyList = jedis.lrange("key_list", 0, 100);
+        for (String key : keyList) {
+            //            each content should have a new column called "origin_key"
+            log.info(key);
+            Assertions.assertTrue(key.contains("origin_key"));
+        }
+        // Clear data to prevent data duplication in the next TestContainer
+        jedis.del("key_list");
+        Assertions.assertEquals(0, jedis.llen("key_list"));
+    }
+
+    @TestTemplate
+    public void testRedisWithOutputKeyToConsole(TestContainer container)
+            throws IOException, InterruptedException {
+        Container.ExecResult execResult = container.executeJob("/redis-to-console.conf");
+        Assertions.assertEquals(0, execResult.getExitCode());
+        Assertions.assertEquals(100, jedis.llen("key_list"));
+        List<String> keyList = jedis.lrange("key_list", 0, 100);
+        for (String key : keyList) {
+            //            each content should have a new column called "origin_key"
+            log.info(key);
+            Assertions.assertTrue(key.contains("origin_key"));
+        }
+        // Clear data to prevent data duplication in the next TestContainer
+        jedis.del("key_list");
+        Assertions.assertEquals(0, jedis.llen("key_list"));
+    }
+
+    @TestTemplate
     public void testRedisWithExpire(TestContainer container)
             throws IOException, InterruptedException {
         Container.ExecResult execResult = container.executeJob("/redis-to-redis-expire.conf");

@@ -28,12 +28,12 @@ public class RedisConfig {
 
     public enum RedisMode {
         SINGLE,
-        CLUSTER;
+        CLUSTER
     }
 
     public enum HashKeyParseMode {
         ALL,
-        KV;
+        KV
     }
 
     public static final Option<String> HOST =
@@ -78,6 +78,12 @@ public class RedisConfig {
                     .stringType()
                     .noDefaultValue()
                     .withDescription("The value of key you want to write to redis.");
+
+    public static final Option<String> OUTPUT_KEY_NAME =
+            Options.key("output_key")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("The key column name. If not set will not output key as a new column.");
 
     public static final Option<RedisDataType> DATA_TYPE =
             Options.key("data_type")

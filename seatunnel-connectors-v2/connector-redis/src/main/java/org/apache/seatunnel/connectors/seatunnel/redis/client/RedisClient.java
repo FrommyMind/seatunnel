@@ -84,13 +84,23 @@ public abstract class RedisClient extends Jedis {
 
     public abstract List<String> batchGetString(List<String> keys);
 
+    public abstract List<Map<String, String>> batchGetStringWithKey(List<String> keys);
+
     public abstract List<List<String>> batchGetList(List<String> keys);
+
+    public abstract List<Map<String, List<String>>> batchGetListWithKey(List<String> keys);
 
     public abstract List<Set<String>> batchGetSet(List<String> keys);
 
+    public abstract List<Map<String, Set<String>>> batchGetSetWithKey(List<String> keys);
+
     public abstract List<Map<String, String>> batchGetHash(List<String> keys);
 
+    public abstract List<Map<String, Map<String, String>>> batchGetHashWithKey(List<String> keys);
+
     public abstract List<List<String>> batchGetZset(List<String> keys);
+
+    public abstract List<Map<String, List<String>>> batchGetZsetWithKey(List<String> keys);
 
     public abstract void batchWriteString(
             List<RowKind> rowKinds, List<String> keys, List<String> values, long expireSeconds);

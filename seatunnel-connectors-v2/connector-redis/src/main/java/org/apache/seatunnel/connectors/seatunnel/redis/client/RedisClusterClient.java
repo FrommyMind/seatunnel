@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +49,18 @@ public class RedisClusterClient extends RedisClient {
     }
 
     @Override
+    public List<Map<String, String>> batchGetStringWithKey(List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return new ArrayList<>();
+        }
+        List<Map<String, String>> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(Collections.singletonMap(key, jedis.get(key)));
+        }
+        return result;
+    }
+
+    @Override
     public List<List<String>> batchGetList(List<String> keys) {
         if (CollectionUtils.isEmpty(keys)) {
             return new ArrayList<>();
@@ -60,6 +73,18 @@ public class RedisClusterClient extends RedisClient {
     }
 
     @Override
+    public List<Map<String, List<String>>> batchGetListWithKey(List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return new ArrayList<>();
+        }
+        List<Map<String, List<String>>> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(Collections.singletonMap(key, jedis.lrange(key, 0, -1)));
+        }
+        return result;
+    }
+
+    @Override
     public List<Set<String>> batchGetSet(List<String> keys) {
         if (CollectionUtils.isEmpty(keys)) {
             return new ArrayList<>();
@@ -67,6 +92,18 @@ public class RedisClusterClient extends RedisClient {
         List<Set<String>> result = new ArrayList<>(keys.size());
         for (String key : keys) {
             result.add(jedis.smembers(key));
+        }
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Set<String>>> batchGetSetWithKey(List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return new ArrayList<>();
+        }
+        List<Map<String, Set<String>>> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(Collections.singletonMap(key, jedis.smembers(key)));
         }
         return result;
     }
@@ -86,6 +123,20 @@ public class RedisClusterClient extends RedisClient {
     }
 
     @Override
+    public List<Map<String, Map<String, String>>> batchGetHashWithKey(List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return new ArrayList<>();
+        }
+        List<Map<String, Map<String, String>>> resultMap = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            Map<String, String> map = jedis.hgetAll(key);
+            map.put("hash_key", key);
+            resultMap.add(Collections.singletonMap(key, map));
+        }
+        return resultMap;
+    }
+
+    @Override
     public List<List<String>> batchGetZset(List<String> keys) {
         if (CollectionUtils.isEmpty(keys)) {
             return new ArrayList<>();
@@ -93,6 +144,18 @@ public class RedisClusterClient extends RedisClient {
         List<List<String>> result = new ArrayList<>(keys.size());
         for (String key : keys) {
             result.add(jedis.zrange(key, 0, -1));
+        }
+        return result;
+    }
+
+    @Override
+    public List<Map<String, List<String>>> batchGetZsetWithKey(List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return new ArrayList<>();
+        }
+        List<Map<String, List<String>>> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(Collections.singletonMap(key, jedis.zrange(key, 0, -1)));
         }
         return result;
     }

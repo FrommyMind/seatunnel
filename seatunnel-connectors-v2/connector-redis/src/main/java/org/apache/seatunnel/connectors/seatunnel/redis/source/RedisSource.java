@@ -25,9 +25,10 @@ import org.apache.seatunnel.api.serialization.DeserializationSchema;
 import org.apache.seatunnel.api.source.Boundedness;
 import org.apache.seatunnel.api.table.catalog.CatalogTable;
 import org.apache.seatunnel.api.table.catalog.CatalogTableUtil;
+import org.apache.seatunnel.api.table.catalog.PhysicalColumn;
+import org.apache.seatunnel.api.table.catalog.TableSchema;
 import org.apache.seatunnel.api.table.catalog.schema.TableSchemaOptions;
 import org.apache.seatunnel.api.table.type.SeaTunnelRow;
-import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
 import org.apache.seatunnel.common.constants.PluginType;
 import org.apache.seatunnel.connectors.seatunnel.common.source.AbstractSingleSplitReader;
 import org.apache.seatunnel.connectors.seatunnel.common.source.AbstractSingleSplitSource;
@@ -39,9 +40,10 @@ import org.apache.seatunnel.format.json.JsonDeserializationSchema;
 
 import java.util.List;
 
+import static org.apache.seatunnel.api.table.type.BasicType.STRING_TYPE;
+
 public class RedisSource extends AbstractSingleSplitSource<SeaTunnelRow> {
     private final RedisParameters redisParameters = new RedisParameters();
-    private SeaTunnelRowType seaTunnelRowType;
     private DeserializationSchema<SeaTunnelRow> deserializationSchema;
 
     private CatalogTable catalogTable;
@@ -70,13 +72,44 @@ public class RedisSource extends AbstractSingleSplitSource<SeaTunnelRow> {
             RedisConfig.Format format = readonlyConfig.get(RedisConfig.FORMAT);
             if (RedisConfig.Format.JSON.equals(format)) {
                 this.catalogTable = CatalogTableUtil.buildWithConfig(readonlyConfig);
-                this.seaTunnelRowType = catalogTable.getSeaTunnelRowType();
+                if (readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).isPresent()) {
+                    TableSchema build =
+                            TableSchema.builder()
+                                    .columns(this.catalogTable.getTableSchema().getColumns())
+                                    .column(
+                                            PhysicalColumn.of(
+                                                    String.valueOf(RedisConfig.OUTPUT_KEY_NAME),
+                                                    STRING_TYPE,
+                                                    0L,
+                                                    false,
+                                                    null,
+                                                    ""))
+                                    .build();
+                    this.catalogTable =
+                            CatalogTable.of(
+                                    this.catalogTable.getTableId(), build, null, null, null);
+                }
                 this.deserializationSchema =
                         new JsonDeserializationSchema(catalogTable, false, false);
             }
         } else {
             this.catalogTable = CatalogTableUtil.buildSimpleTextTable();
-            this.seaTunnelRowType = catalogTable.getSeaTunnelRowType();
+            if (readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).isPresent()) {
+                TableSchema build =
+                        TableSchema.builder()
+                                .columns(this.catalogTable.getTableSchema().getColumns())
+                                .column(
+                                        PhysicalColumn.of(
+                                                String.valueOf(RedisConfig.OUTPUT_KEY_NAME),
+                                                STRING_TYPE,
+                                                0L,
+                                                false,
+                                                null,
+                                                ""))
+                                .build();
+                this.catalogTable =
+                        CatalogTable.of(this.catalogTable.getTableId(), build, null, null, null);
+            }
             this.deserializationSchema = null;
         }
     }

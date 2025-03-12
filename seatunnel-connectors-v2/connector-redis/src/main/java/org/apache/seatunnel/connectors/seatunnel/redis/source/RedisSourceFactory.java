@@ -57,7 +57,7 @@ public class RedisSourceFactory implements TableSourceFactory {
                         RedisConfig.HASH_KEY_PARSE_MODE,
                         RedisConfig.AUTH,
                         RedisConfig.USER,
-                        RedisConfig.KEY)
+                        RedisConfig.OUTPUT_KEY_NAME)
                 .conditional(RedisConfig.MODE, RedisConfig.RedisMode.CLUSTER, RedisConfig.NODES)
                 .bundled(RedisConfig.FORMAT, TableSchemaOptions.SCHEMA)
                 .build();

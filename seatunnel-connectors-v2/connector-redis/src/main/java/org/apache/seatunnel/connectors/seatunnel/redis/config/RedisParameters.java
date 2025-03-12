@@ -50,6 +50,7 @@ public class RedisParameters implements Serializable {
     private int dbNum;
     private String user = "";
     private String keysPattern;
+    private String outputKeyName;
     private String keyField;
     private RedisDataType redisDataType;
     private RedisConfig.RedisMode mode;
@@ -96,6 +97,11 @@ public class RedisParameters implements Serializable {
         // set keysPattern
         if (config.getOptional(RedisConfig.KEY_PATTERN).isPresent()) {
             this.keysPattern = config.get(RedisConfig.KEY_PATTERN);
+        }
+
+        // set output_key
+        if (config.getOptional(RedisConfig.OUTPUT_KEY_NAME).isPresent()) {
+            this.outputKeyName = config.get(RedisConfig.OUTPUT_KEY_NAME);
         }
         // set redis data type verification factory createAndPrepareSource
         this.redisDataType = config.get(RedisConfig.DATA_TYPE);

@@ -60,6 +60,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -449,6 +450,11 @@ public abstract class RedisTestCaseTemplateIT extends TestSuiteBase implements T
         Container.ExecResult execResult =
                 container.executeJob("/redis-to-redis-custom-hash-key-and-value.conf");
         Assertions.assertEquals(0, execResult.getExitCode());
+        Collection<String> values = jedis.hgetAll("custom-hash-check").values();
+        for (String value : values) {
+            System.out.println(value);
+        }
+
         long amount = jedis.hlen("custom-hash-check");
         Assertions.assertEquals(100, amount);
         for (int i = 0; i < 100; i++) {

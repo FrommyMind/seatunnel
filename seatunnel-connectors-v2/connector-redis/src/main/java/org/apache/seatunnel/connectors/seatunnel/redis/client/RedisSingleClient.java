@@ -50,7 +50,8 @@ public class RedisSingleClient extends RedisClient {
     }
 
     @Override
-    public List<Map<String, String>> batchGetStringWithKey(List<String> keys) {
+    public List<Map<String, String>> batchGetStringWithKey(
+            List<String> keys, String outputKeyName) {
         if (CollectionUtils.isEmpty(keys)) {
             return new ArrayList<>();
         }
@@ -174,9 +175,6 @@ public class RedisSingleClient extends RedisClient {
         for (int i = 0; i < keys.size(); i++) {
             Response<Map<String, String>> response = responses.get(i);
             Map<String, String> map = response.get();
-            if (map != null) {
-                map.put("hash_key", keys.get(i));
-            }
             resultList.add(map);
         }
 
@@ -202,10 +200,7 @@ public class RedisSingleClient extends RedisClient {
         for (Map<String, Response<Map<String, String>>> response : responses) {
             for (String hash_key : response.keySet()) {
                 Map<String, String> map = response.get(hash_key).get();
-                if (map != null) {
-                    map.put("hash_key", hash_key);
-                    resultList.add(Collections.singletonMap(hash_key, map));
-                }
+                resultList.add(Collections.singletonMap(hash_key, map));
             }
         }
 

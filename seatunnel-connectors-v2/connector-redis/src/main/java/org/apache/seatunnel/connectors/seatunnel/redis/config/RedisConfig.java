@@ -31,11 +31,6 @@ public class RedisConfig {
         CLUSTER
     }
 
-    public enum HashKeyParseMode {
-        ALL,
-        KV
-    }
-
     public static final Option<String> HOST =
             Options.key("host")
                     .stringType()
@@ -80,7 +75,7 @@ public class RedisConfig {
                     .withDescription("The value of key you want to write to redis.");
 
     public static final Option<String> OUTPUT_KEY_NAME =
-            Options.key("output_key")
+            Options.key("output_key_name")
                     .stringType()
                     .noDefaultValue()
                     .withDescription(
@@ -112,13 +107,6 @@ public class RedisConfig {
                     .noDefaultValue()
                     .withDescription(
                             "redis nodes information, used in cluster mode, must like as the following format: [host1:port1, host2:port2]");
-
-    public static final Option<RedisConfig.HashKeyParseMode> HASH_KEY_PARSE_MODE =
-            Options.key("hash_key_parse_mode")
-                    .enumType(RedisConfig.HashKeyParseMode.class)
-                    .defaultValue(HashKeyParseMode.ALL)
-                    .withDescription(
-                            "hash key parse mode, support all or kv, default value is all");
 
     public static final Option<Long> EXPIRE =
             Options.key("expire")

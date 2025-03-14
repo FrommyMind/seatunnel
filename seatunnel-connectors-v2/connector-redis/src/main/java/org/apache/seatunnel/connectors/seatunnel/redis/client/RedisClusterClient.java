@@ -49,7 +49,8 @@ public class RedisClusterClient extends RedisClient {
     }
 
     @Override
-    public List<Map<String, String>> batchGetStringWithKey(List<String> keys) {
+    public List<Map<String, String>> batchGetStringWithKey(
+            List<String> keys, String outputKeyName) {
         if (CollectionUtils.isEmpty(keys)) {
             return new ArrayList<>();
         }
@@ -116,7 +117,6 @@ public class RedisClusterClient extends RedisClient {
         List<Map<String, String>> result = new ArrayList<>(keys.size());
         for (String key : keys) {
             Map<String, String> map = jedis.hgetAll(key);
-            map.put("hash_key", key);
             result.add(map);
         }
         return result;

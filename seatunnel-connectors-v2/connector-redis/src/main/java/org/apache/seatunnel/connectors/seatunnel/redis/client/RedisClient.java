@@ -84,7 +84,8 @@ public abstract class RedisClient extends Jedis {
 
     public abstract List<String> batchGetString(List<String> keys);
 
-    public abstract List<Map<String, String>> batchGetStringWithKey(List<String> keys);
+    public abstract List<Map<String, String>> batchGetStringWithKey(
+            List<String> keys, String outputKeyName);
 
     public abstract List<List<String>> batchGetList(List<String> keys);
 

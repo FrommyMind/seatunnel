@@ -17,8 +17,6 @@
 
 package org.apache.seatunnel.connectors.seatunnel.redis.source;
 
-import org.apache.seatunnel.shade.com.google.common.collect.Lists;
-
 import org.apache.seatunnel.api.common.SeaTunnelAPIErrorCode;
 import org.apache.seatunnel.api.configuration.ReadonlyConfig;
 import org.apache.seatunnel.api.serialization.DeserializationSchema;
@@ -26,6 +24,7 @@ import org.apache.seatunnel.api.source.Boundedness;
 import org.apache.seatunnel.api.table.catalog.CatalogTable;
 import org.apache.seatunnel.api.table.catalog.CatalogTableUtil;
 import org.apache.seatunnel.api.table.catalog.PhysicalColumn;
+import org.apache.seatunnel.api.table.catalog.TableIdentifier;
 import org.apache.seatunnel.api.table.catalog.TableSchema;
 import org.apache.seatunnel.api.table.catalog.schema.TableSchemaOptions;
 import org.apache.seatunnel.api.table.type.SeaTunnelRow;
@@ -37,8 +36,10 @@ import org.apache.seatunnel.connectors.seatunnel.redis.config.RedisConfig;
 import org.apache.seatunnel.connectors.seatunnel.redis.config.RedisParameters;
 import org.apache.seatunnel.connectors.seatunnel.redis.exception.RedisConnectorException;
 import org.apache.seatunnel.format.json.JsonDeserializationSchema;
+import org.apache.seatunnel.shade.com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.seatunnel.api.table.type.BasicType.STRING_TYPE;
 
@@ -71,45 +72,66 @@ public class RedisSource extends AbstractSingleSplitSource<SeaTunnelRow> {
 
             RedisConfig.Format format = readonlyConfig.get(RedisConfig.FORMAT);
             if (RedisConfig.Format.JSON.equals(format)) {
-                this.catalogTable = CatalogTableUtil.buildWithConfig(readonlyConfig);
+                CatalogTable originCatalogTable = CatalogTableUtil.buildWithConfig(readonlyConfig);
                 if (readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).isPresent()) {
-                    TableSchema build =
+                    String outputKeyName =
+                            readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).get();
+                    TableSchema tableSchema =
                             TableSchema.builder()
-                                    .columns(this.catalogTable.getTableSchema().getColumns())
                                     .column(
                                             PhysicalColumn.of(
-                                                    String.valueOf(RedisConfig.OUTPUT_KEY_NAME),
+                                                    outputKeyName,
                                                     STRING_TYPE,
                                                     0L,
                                                     false,
                                                     null,
                                                     ""))
+                                    .columns(originCatalogTable.getTableSchema().getColumns())
                                     .build();
+                    TableIdentifier tableId = originCatalogTable.getTableId();
+                    Map<String, String> options = originCatalogTable.getOptions();
+                    List<String> partitionKeys = originCatalogTable.getPartitionKeys();
+                    String comment = originCatalogTable.getComment();
+                    String catalogName = originCatalogTable.getCatalogName();
                     this.catalogTable =
                             CatalogTable.of(
-                                    this.catalogTable.getTableId(), build, null, null, null);
+                                    tableId,
+                                    tableSchema,
+                                    options,
+                                    partitionKeys,
+                                    comment,
+                                    catalogName);
+                } else {
+                    this.catalogTable = originCatalogTable;
                 }
                 this.deserializationSchema =
                         new JsonDeserializationSchema(catalogTable, false, false);
             }
         } else {
-            this.catalogTable = CatalogTableUtil.buildSimpleTextTable();
+
+            CatalogTable originCatalogTable = CatalogTableUtil.buildSimpleTextTable();
             if (readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).isPresent()) {
-                TableSchema build =
+                String outputKeyName =
+                        readonlyConfig.getOptional(RedisConfig.OUTPUT_KEY_NAME).get();
+                TableSchema tableSchema =
                         TableSchema.builder()
-                                .columns(this.catalogTable.getTableSchema().getColumns())
                                 .column(
                                         PhysicalColumn.of(
-                                                String.valueOf(RedisConfig.OUTPUT_KEY_NAME),
-                                                STRING_TYPE,
-                                                0L,
-                                                false,
-                                                null,
-                                                ""))
+                                                outputKeyName, STRING_TYPE, 0L, false, null, ""))
+                                .columns(originCatalogTable.getTableSchema().getColumns())
                                 .build();
+                TableIdentifier tableId = originCatalogTable.getTableId();
+                Map<String, String> options = originCatalogTable.getOptions();
+                List<String> partitionKeys = originCatalogTable.getPartitionKeys();
+                String comment = originCatalogTable.getComment();
+                String catalogName = originCatalogTable.getCatalogName();
                 this.catalogTable =
-                        CatalogTable.of(this.catalogTable.getTableId(), build, null, null, null);
+                        CatalogTable.of(
+                                tableId, tableSchema, options, partitionKeys, comment, catalogName);
+            } else {
+                this.catalogTable = originCatalogTable;
             }
+
             this.deserializationSchema = null;
         }
     }

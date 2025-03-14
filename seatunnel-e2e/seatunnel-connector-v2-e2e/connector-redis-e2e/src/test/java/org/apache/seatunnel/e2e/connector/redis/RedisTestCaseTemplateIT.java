@@ -60,7 +60,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -230,21 +229,43 @@ public abstract class RedisTestCaseTemplateIT extends TestSuiteBase implements T
     }
 
     @TestTemplate
-    public void testRedisWithOutputKey(TestContainer container)
+    public void testRedisWithOutputKeyNameToRedis(TestContainer container)
             throws IOException, InterruptedException {
         Container.ExecResult execResult =
                 container.executeJob("/redis-with-output-key-to-redis.conf");
         Assertions.assertEquals(0, execResult.getExitCode());
-        Assertions.assertEquals(100, jedis.llen("key_list"));
-        List<String> keyList = jedis.lrange("key_list", 0, 100);
-        for (String key : keyList) {
-            //            each content should have a new column called "origin_key"
-            log.info(key);
-            Assertions.assertTrue(key.contains("origin_key"));
+        jedis.select(2);
+        String keyPrefix = "key_test";
+        for (int i = 0; i < 100; i++) {
+            String key = keyPrefix + i;
+            Assertions.assertTrue(jedis.get(key).contains(keyPrefix));
+            jedis.del(key);
         }
-        // Clear data to prevent data duplication in the next TestContainer
-        jedis.del("key_list");
-        Assertions.assertEquals(0, jedis.llen("key_list"));
+        jedis.select(0);
+    }
+
+    @TestTemplate
+    public void testHashRedisWithOutputKeyNameToRedis(TestContainer container)
+            throws IOException, InterruptedException {
+        Container.ExecResult execResult =
+                container.executeJob("/redis-hash-with-output-key-to-redis.conf");
+        Assertions.assertEquals(0, execResult.getExitCode());
+        jedis.select(2);
+        String hashKeyPrefix = "key-test-hash";
+        for (int i = 0; i < 100; i++) {
+            String setKey = hashKeyPrefix + i;
+            Map<String, String> map = new HashMap<>();
+            map.put("name", "test-user");
+            map.put("age", "" + i);
+            jedis.hset(setKey, map);
+        }
+        jedis.select(3);
+        for (int i = 0; i < 100; i++) {
+            String key = hashKeyPrefix + i;
+            Assertions.assertTrue(jedis.get(key).contains(hashKeyPrefix));
+            jedis.del(key);
+        }
+        jedis.select(0);
     }
 
     @TestTemplate
@@ -468,17 +489,29 @@ public abstract class RedisTestCaseTemplateIT extends TestSuiteBase implements T
         Container.ExecResult execResult =
                 container.executeJob("/redis-to-redis-custom-hash-key-and-value.conf");
         Assertions.assertEquals(0, execResult.getExitCode());
-        Collection<String> values = jedis.hgetAll("custom-hash-check").values();
-        for (String value : values) {
-            System.out.println(value);
-        }
-
         long amount = jedis.hlen("custom-hash-check");
         Assertions.assertEquals(100, amount);
         for (int i = 0; i < 100; i++) {
             Assertions.assertEquals("string", jedis.hget("custom-hash-check", String.valueOf(i)));
         }
         jedis.del("custom-hash-check");
+    }
+
+    @TestTemplate
+    public void testCustomHashKeyWithOutputKeyNameRedis(TestContainer container)
+            throws IOException, InterruptedException {
+        Container.ExecResult execResult =
+                container.executeJob("/redis-to-redis-custom-hash-key-with-output-key.conf");
+        Assertions.assertEquals(0, execResult.getExitCode());
+        jedis.select(2);
+        String origin_key_prefix = "key_test";
+        for (int i = 0; i < 100; i++) {
+            Assertions.assertEquals("string", jedis.hget(origin_key_prefix + i, String.valueOf(i)));
+        }
+        for (int i = 0; i < 100; i++) {
+            jedis.del(origin_key_prefix + i);
+        }
+        jedis.select(0);
     }
 
     @TestTemplate

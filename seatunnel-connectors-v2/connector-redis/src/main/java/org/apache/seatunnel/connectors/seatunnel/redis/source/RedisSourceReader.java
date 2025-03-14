@@ -295,9 +295,10 @@ public class RedisSourceReader extends AbstractSingleSplitReader<SeaTunnelRow> {
         List<Map<String, Map<String, String>>> values = redisClient.batchGetHashWithKey(keys);
         if (deserializationSchema == null) {
             for (Map<String, Map<String, String>> value : values) {
-                for (String key:value.keySet()){
+                for (String key : value.keySet()) {
                     SeaTunnelRow seaTunnelRow =
-                            new SeaTunnelRow(new Object[] {key, JsonUtils.toJsonString(value.get(key))});
+                            new SeaTunnelRow(
+                                    new Object[] {key, JsonUtils.toJsonString(value.get(key))});
                     output.collect(seaTunnelRow);
                 }
             }

@@ -80,7 +80,7 @@ public class KafkaSource
             SourceReader.Context readerContext) {
 
         BlockingQueue<RecordsWithSplitIds<ConsumerRecord<byte[], byte[]>>> elementsQueue =
-                new LinkedBlockingQueue<>();
+                new LinkedBlockingQueue<>(kafkaSourceConfig.getQueueSize());
 
         Supplier<KafkaPartitionSplitReader> kafkaPartitionSplitReaderSupplier =
                 () -> new KafkaPartitionSplitReader(kafkaSourceConfig, readerContext);

@@ -103,4 +103,12 @@ public class KafkaSourceOptions extends KafkaBaseOptions {
                             "The processing method of data format error. The default value is fail, and the optional value is (fail, skip). "
                                     + "When fail is selected, data format error will block and an exception will be thrown. "
                                     + "When skip is selected, data format error will skip this line data.");
+
+    public static final Option<Integer> QUEUE_SIZE =
+            Options.key("queue.size")
+                    .intType()
+                    .defaultValue(1000)
+                    .withDescription(
+                            "The queue size of fetcher queue, the default value is 1000,"
+                                    + " which is the maximum number of messages that can be buffered in the memory.");
 }

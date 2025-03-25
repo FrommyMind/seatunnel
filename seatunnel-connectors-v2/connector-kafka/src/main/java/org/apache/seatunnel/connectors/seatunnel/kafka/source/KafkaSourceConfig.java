@@ -88,6 +88,7 @@ import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSource
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.PATTERN;
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.PROTOBUF_MESSAGE_NAME;
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.PROTOBUF_SCHEMA;
+import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.QUEUE_SIZE;
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.START_MODE;
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.START_MODE_OFFSETS;
 import static org.apache.seatunnel.connectors.seatunnel.kafka.config.KafkaSourceOptions.START_MODE_TIMESTAMP;
@@ -105,6 +106,7 @@ public class KafkaSourceConfig implements Serializable {
     @Getter private final MessageFormatErrorHandleWay messageFormatErrorHandleWay;
     @Getter private final String consumerGroup;
     @Getter private final long pollTimeout;
+    @Getter private final int queueSize;
 
     public KafkaSourceConfig(ReadonlyConfig readonlyConfig) {
         this.bootstrap = readonlyConfig.get(BOOTSTRAP_SERVERS);
@@ -116,6 +118,7 @@ public class KafkaSourceConfig implements Serializable {
                 readonlyConfig.get(MESSAGE_FORMAT_ERROR_HANDLE_WAY_OPTION);
         this.pollTimeout = readonlyConfig.get(KEY_POLL_TIMEOUT);
         this.consumerGroup = readonlyConfig.get(CONSUMER_GROUP);
+        this.queueSize = readonlyConfig.get(QUEUE_SIZE);
     }
 
     private Properties createKafkaProperties(ReadonlyConfig readonlyConfig) {

@@ -292,18 +292,18 @@ public class LocalFileIT extends TestSuiteBase {
                         container);
 
                 ContainerUtil.copyFileIntoContainers(
+                        "/csv/break_line_en.csv",
+                        "/seatunnel/read/csv/break_line_en/break_line_en.csv",
+                        container);
+
+                ContainerUtil.copyFileIntoContainers(
+                        "/csv/break_line_de.csv",
+                        "/seatunnel/read/csv/break_line_de/break_line_de.csv",
+                        container);
+
+                ContainerUtil.copyFileIntoContainers(
                         "/text/e2e_null_format.txt",
                         "/seatunnel/read/e2e_null_format/e2e_null_format.txt",
-                        container);
-
-                ContainerUtil.copyFileIntoContainers(
-                        "/text/break_line_en.csv",
-                        "/seatunnel/read/break_line_en/break_line_en.txt",
-                        container);
-
-                ContainerUtil.copyFileIntoContainers(
-                        "/text/break_line_de.csv",
-                        "/seatunnel/read/break_line_de/break_line_de.txt",
                         container);
 
                 container.execInContainer("mkdir", "-p", "/tmp/fake_empty");

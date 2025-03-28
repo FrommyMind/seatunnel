@@ -296,6 +296,16 @@ public class LocalFileIT extends TestSuiteBase {
                         "/seatunnel/read/e2e_null_format/e2e_null_format.txt",
                         container);
 
+                ContainerUtil.copyFileIntoContainers(
+                        "/text/break_line_en.csv",
+                        "/seatunnel/read/break_line_en/break_line_en.txt",
+                        container);
+
+                ContainerUtil.copyFileIntoContainers(
+                        "/text/break_line_de.csv",
+                        "/seatunnel/read/break_line_de/break_line_de.txt",
+                        container);
+
                 container.execInContainer("mkdir", "-p", "/tmp/fake_empty");
             };
 
@@ -306,6 +316,8 @@ public class LocalFileIT extends TestSuiteBase {
         helper.execute("/csv/fake_to_local_csv.conf");
         helper.execute("/csv/local_csv_to_assert.conf");
         helper.execute("/csv/breakline_csv_to_assert.conf");
+        helper.execute("/csv/breakline_csv_en_to_assert.conf");
+        helper.execute("/csv/breakline_csv_de_to_assert.conf");
         helper.execute("/excel/fake_to_local_excel.conf");
         helper.execute("/excel/local_excel_to_assert.conf");
         helper.execute("/excel/local_excel_projection_to_assert.conf");

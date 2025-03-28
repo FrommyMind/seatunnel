@@ -54,6 +54,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -69,6 +72,7 @@ public class ExcelReadStrategy extends AbstractReadStrategy {
 
     private String timeFormatterPattern = TimeUtils.Formatter.HH_MM_SS.getValue();
 
+    private NumberFormat numberFormat = null;
     private int[] indexes;
 
     private int cellCount;
@@ -108,13 +112,35 @@ public class ExcelReadStrategy extends AbstractReadStrategy {
             timeFormatterPattern =
                     pluginConfig.getString(BaseSourceConfigOptions.TIME_FORMAT.key());
         }
+        if (pluginConfig.hasPath(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE.key())) {
+            String language =
+                    pluginConfig.getString(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE.key());
+            String country =
+                    pluginConfig.hasPath(BaseSourceConfigOptions.NUMBER_FORMAT_COUNTRY.key())
+                            ? pluginConfig.getString(
+                                    BaseSourceConfigOptions.NUMBER_FORMAT_COUNTRY.key())
+                            : "";
+            String variant =
+                    pluginConfig.hasPath(BaseSourceConfigOptions.NUMBER_FORMAT_VARIANT.key())
+                            ? pluginConfig.getString(
+                                    BaseSourceConfigOptions.NUMBER_FORMAT_VARIANT.key())
+                            : "";
+            Locale locale =
+                    new Locale.Builder()
+                            .setLanguage(language)
+                            .setRegion(country)
+                            .setVariant(variant)
+                            .build();
+            numberFormat = NumberFormat.getInstance(locale);
+        }
 
         ExcelCellUtils excelCellUtils =
                 new ExcelCellUtils(
                         pluginConfig,
                         dateFormatterPattern,
                         dateTimeFormatterPattern,
-                        timeFormatterPattern);
+                        timeFormatterPattern,
+                        numberFormat);
 
         if (pluginConfig.hasPath(BaseSourceConfigOptions.EXCEL_ENGINE.key())
                 && pluginConfig
@@ -179,18 +205,22 @@ public class ExcelReadStrategy extends AbstractReadStrategy {
                                 SeaTunnelRow seaTunnelRow = new SeaTunnelRow(cellCount);
                                 for (int j : cellIndexes) {
                                     Cell cell = rowData.getCell(j);
-                                    seaTunnelRow.setField(
-                                            z++,
-                                            cell == null
-                                                    ? null
-                                                    : excelCellUtils.convert(
-                                                            getCellValue(
-                                                                    cell.getCellType(),
-                                                                    cell,
-                                                                    formulaEvaluator,
-                                                                    formatter),
-                                                            fieldTypes[z - 1],
-                                                            null));
+                                    try {
+                                        seaTunnelRow.setField(
+                                                z++,
+                                                cell == null
+                                                        ? null
+                                                        : excelCellUtils.convert(
+                                                                getCellValue(
+                                                                        cell.getCellType(),
+                                                                        cell,
+                                                                        formulaEvaluator,
+                                                                        formatter),
+                                                                fieldTypes[z - 1],
+                                                                null));
+                                    } catch (ParseException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
                                 if (isMergePartition) {
                                     int index = seaTunnelRowType.getTotalFields();

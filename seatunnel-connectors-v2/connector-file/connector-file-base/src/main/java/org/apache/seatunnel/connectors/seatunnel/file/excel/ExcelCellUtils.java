@@ -40,6 +40,8 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -52,6 +54,7 @@ public class ExcelCellUtils implements Serializable {
     private DateTimeFormatter dateFormatter;
     private DateTimeFormatter dateTimeFormatter;
     private DateTimeFormatter timeFormatter;
+    private NumberFormat numberFormat;
 
     protected Config pluginConfig;
 
@@ -61,11 +64,13 @@ public class ExcelCellUtils implements Serializable {
             Config pluginConfig,
             String dateFormatterPattern,
             String dateTimeFormatterPattern,
-            String timeFormatterPattern) {
+            String timeFormatterPattern,
+            NumberFormat numberFormat) {
         this.pluginConfig = pluginConfig;
         this.dateFormatter = DateTimeFormatter.ofPattern(dateFormatterPattern);
         this.dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatterPattern);
         this.timeFormatter = DateTimeFormatter.ofPattern(timeFormatterPattern);
+        this.numberFormat = numberFormat;
     }
 
     private String getCellValue(ReadCellData cellData) {
@@ -85,7 +90,8 @@ public class ExcelCellUtils implements Serializable {
     }
 
     @SneakyThrows(JsonProcessingException.class)
-    public Object convert(Object field, SeaTunnelDataType<?> fieldType, @Nullable Cell cellRaw) {
+    public Object convert(Object field, SeaTunnelDataType<?> fieldType, @Nullable Cell cellRaw)
+            throws ParseException {
         if (field == null && cellRaw == null) {
             return null;
         }
@@ -115,20 +121,41 @@ public class ExcelCellUtils implements Serializable {
                 }
                 return fieldValue;
             case DOUBLE:
+                if (numberFormat != null) {
+                    return numberFormat.parse(fieldValue).doubleValue();
+                }
                 return Double.parseDouble(fieldValue);
             case BOOLEAN:
                 return Boolean.parseBoolean(fieldValue);
             case FLOAT:
+                if (numberFormat != null) {
+                    return (float) numberFormat.parse(fieldValue).doubleValue();
+                }
                 return (float) Double.parseDouble(fieldValue);
             case BIGINT:
+                if (numberFormat != null) {
+                    return (long) numberFormat.parse(fieldValue).doubleValue();
+                }
                 return (long) Double.parseDouble(fieldValue);
             case INT:
+                if (numberFormat != null) {
+                    return (int) numberFormat.parse(fieldValue).doubleValue();
+                }
                 return (int) Double.parseDouble(fieldValue);
             case TINYINT:
+                if (numberFormat != null) {
+                    return (byte) numberFormat.parse(fieldValue).doubleValue();
+                }
                 return (byte) Double.parseDouble(fieldValue);
             case SMALLINT:
+                if (numberFormat != null) {
+                    return (short) numberFormat.parse(fieldValue).doubleValue();
+                }
                 return (short) Double.parseDouble(fieldValue);
             case DECIMAL:
+                if (numberFormat != null) {
+                    return BigDecimal.valueOf(numberFormat.parse(fieldValue).doubleValue());
+                }
                 return BigDecimal.valueOf(Double.parseDouble(fieldValue));
             case DATE:
                 return parseDate(field, fieldType);
@@ -170,7 +197,8 @@ public class ExcelCellUtils implements Serializable {
         return LocalDateTime.parse(fieldValue.toString(), dateTimeFormatter);
     }
 
-    private Object parseRow(String fieldValue, SeaTunnelDataType<?> fieldType) {
+    private Object parseRow(String fieldValue, SeaTunnelDataType<?> fieldType)
+            throws ParseException {
         String delimiter =
                 ReadonlyConfig.fromConfig(pluginConfig)
                         .get(BaseSourceConfigOptions.FIELD_DELIMITER);

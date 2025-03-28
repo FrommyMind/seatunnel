@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,7 +91,12 @@ public class ExcelReaderListener extends AnalysisEventListener<Map<Integer, Obje
             if (cellMap.get(i) == null) {
                 seaTunnelRow.setField(i, null);
             } else {
-                Object cell = excelCellUtils.convert(data.get(i), fieldTypes[i], cellMap.get(i));
+                Object cell;
+                try {
+                    cell = excelCellUtils.convert(data.get(i), fieldTypes[i], cellMap.get(i));
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
                 seaTunnelRow.setField(i, cell);
             }
         }

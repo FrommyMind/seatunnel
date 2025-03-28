@@ -61,6 +61,24 @@ public class BaseSourceConfigOptions {
                     .noDefaultValue()
                     .withDescription("The string that represents a null value");
 
+    public static final Option<String> NUMBER_FORMAT_LANGUAGE =
+            Options.key("number_format_language")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("The language value of #java.util.Locale");
+
+    public static final Option<String> NUMBER_FORMAT_COUNTRY =
+            Options.key("number_format_country")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("The country value of #java.util.Locale");
+
+    public static final Option<String> NUMBER_FORMAT_VARIANT =
+            Options.key("number_format_variant")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("The variant value of #java.util.Locale");
+
     public static final Option<String> ENCODING =
             Options.key("encoding")
                     .stringType()

@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -65,6 +67,7 @@ public class CsvDeserializationSchema implements Serializable {
     private final String nullFormat;
     private final CsvLineProcessor processor;
     private final CatalogTable catalogTable;
+    private final NumberFormat numberFormat;
 
     @SuppressWarnings("MagicNumber")
     public static final DateTimeFormatter TIME_FORMAT =
@@ -81,13 +84,15 @@ public class CsvDeserializationSchema implements Serializable {
             String encoding,
             String nullFormat,
             CsvLineProcessor processor,
-            CatalogTable catalogTable) {
+            CatalogTable catalogTable,
+            NumberFormat numberFormat) {
         this.seaTunnelRowType = seaTunnelRowType;
         this.separators = separators;
         this.encoding = encoding;
         this.nullFormat = nullFormat;
         this.processor = processor;
         this.catalogTable = catalogTable;
+        this.numberFormat = numberFormat;
     }
 
     public static Builder builder() {
@@ -105,6 +110,7 @@ public class CsvDeserializationSchema implements Serializable {
         private String encoding = StandardCharsets.UTF_8.name();
         private String nullFormat;
         private CsvLineProcessor csvLineProcessor = new DefaultCsvLineProcessor();
+        private NumberFormat numberFormat;
 
         private Builder() {}
 
@@ -158,6 +164,11 @@ public class CsvDeserializationSchema implements Serializable {
             return this;
         }
 
+        public Builder numberFormat(NumberFormat numberFormat) {
+            this.numberFormat = numberFormat;
+            return this;
+        }
+
         public CsvDeserializationSchema build() {
             return new CsvDeserializationSchema(
                     seaTunnelRowType,
@@ -165,11 +176,12 @@ public class CsvDeserializationSchema implements Serializable {
                     encoding,
                     nullFormat,
                     csvLineProcessor,
-                    catalogTable);
+                    catalogTable,
+                    numberFormat);
         }
     }
 
-    protected SeaTunnelRow deserialize(byte[] message) throws IOException {
+    protected SeaTunnelRow deserialize(byte[] message) throws IOException, ParseException {
         if (message == null || message.length == 0) {
             return null;
         }
@@ -179,7 +191,7 @@ public class CsvDeserializationSchema implements Serializable {
         return seaTunnelRow;
     }
 
-    public SeaTunnelRow getSeaTunnelRow(Map<Integer, String> splitsMap) {
+    public SeaTunnelRow getSeaTunnelRow(Map<Integer, String> splitsMap) throws ParseException {
         Object[] objects = new Object[seaTunnelRowType.getTotalFields()];
         for (int i = 0; i < objects.length; i++) {
             String fieldValue = splitsMap.get(i);
@@ -227,7 +239,8 @@ public class CsvDeserializationSchema implements Serializable {
     }
 
     private Object convert(
-            String field, SeaTunnelDataType<?> fieldType, int level, String fieldName) {
+            String field, SeaTunnelDataType<?> fieldType, int level, String fieldName)
+            throws ParseException {
         if (StringUtils.isBlank(field)) {
             return null;
         }
@@ -292,18 +305,39 @@ public class CsvDeserializationSchema implements Serializable {
             case BOOLEAN:
                 return Boolean.parseBoolean(field);
             case TINYINT:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).byteValue();
+                }
                 return Byte.parseByte(field);
             case SMALLINT:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).shortValue();
+                }
                 return Short.parseShort(field);
             case INT:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).intValue();
+                }
                 return Integer.parseInt(field);
             case BIGINT:
+                if (numberFormat != null) {
+                    return (long) numberFormat.parse(field).doubleValue();
+                }
                 return Long.parseLong(field);
             case FLOAT:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).floatValue();
+                }
                 return Float.parseFloat(field);
             case DOUBLE:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).doubleValue();
+                }
                 return Double.parseDouble(field);
             case DECIMAL:
+                if (numberFormat != null) {
+                    return numberFormat.parse(field).doubleValue();
+                }
                 return new BigDecimal(field);
             case NULL:
                 return null;

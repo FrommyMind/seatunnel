@@ -50,7 +50,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -149,6 +152,8 @@ public class CsvReadStrategy extends AbstractReadStrategy {
                             currentFileName);
             throw new FileConnectorException(
                     FileConnectorErrorCode.DATA_DESERIALIZE_FAILED, errorMsg, e);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -173,6 +178,21 @@ public class CsvReadStrategy extends AbstractReadStrategy {
                                 readonlyConfig
                                         .getOptional(BaseSourceConfigOptions.NULL_FORMAT)
                                         .orElse(null));
+        if (readonlyConfig
+                .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE)
+                .isPresent()) {
+            String language = readonlyConfig.get(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE);
+            String country =
+                    readonlyConfig
+                            .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_COUNTRY)
+                            .orElse("");
+            String variant =
+                    readonlyConfig
+                            .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_VARIANT)
+                            .orElse("");
+            Locale local = new Locale(language, country, variant);
+            builder.numberFormat(NumberFormat.getInstance(local));
+        }
         if (isMergePartition) {
             deserializationSchema =
                     builder.seaTunnelRowType(this.seaTunnelRowTypeWithPartition).build();
@@ -205,6 +225,22 @@ public class CsvReadStrategy extends AbstractReadStrategy {
                                 readonlyConfig
                                         .getOptional(BaseSourceConfigOptions.NULL_FORMAT)
                                         .orElse(null));
+
+        if (readonlyConfig
+                .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE)
+                .isPresent()) {
+            String language = readonlyConfig.get(BaseSourceConfigOptions.NUMBER_FORMAT_LANGUAGE);
+            String country =
+                    readonlyConfig
+                            .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_COUNTRY)
+                            .orElse("");
+            String variant =
+                    readonlyConfig
+                            .getOptional(BaseSourceConfigOptions.NUMBER_FORMAT_VARIANT)
+                            .orElse("");
+            Locale local = new Locale(language, country, variant);
+            builder.numberFormat(NumberFormat.getInstance(local));
+        }
         if (isMergePartition) {
             deserializationSchema =
                     builder.seaTunnelRowType(userDefinedRowTypeWithPartition).build();

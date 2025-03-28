@@ -36,10 +36,13 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -82,7 +85,6 @@ public class CsvTextFormatSchemaTest {
                     + '\002'
                     + '\003'
                     + "1231";
-
     public SeaTunnelRowType seaTunnelRowType;
 
     @BeforeEach
@@ -137,7 +139,7 @@ public class CsvTextFormatSchemaTest {
     }
 
     @Test
-    public void testParse() throws IOException {
+    public void testParse() throws IOException, ParseException {
         String delimiter = ",";
         CsvDeserializationSchema deserializationSchema =
                 CsvDeserializationSchema.builder()
@@ -200,7 +202,7 @@ public class CsvTextFormatSchemaTest {
     }
 
     @Test
-    public void testSerializationWithTimestamp() {
+    public void testSerializationWithTimestamp() throws ParseException {
         String delimiter = ",";
 
         SeaTunnelRowType schema =
@@ -233,6 +235,52 @@ public class CsvTextFormatSchemaTest {
         row = new SeaTunnelRow(new Object[] {timestamp});
         assertEquals(
                 "2022-09-24 22:45:00.000123", new String(csvSerializationSchema.serialize(row)));
+    }
+
+    @Test
+    public void testSerializationWithLanguageEn() throws ParseException {
+        String delimiter = ",";
+
+        SeaTunnelRowType schema =
+                new SeaTunnelRowType(
+                        new String[] {"double", "decimal"},
+                        new SeaTunnelDataType[] {BasicType.DOUBLE_TYPE, new DecimalType(30, 8)});
+        String d = "8.8888888";
+        String decimal = "123,456,789.987";
+        Locale locale = new Locale.Builder().setLanguage("en").build();
+        NumberFormat numberFormat = NumberFormat.getInstance(locale);
+        CsvSerializationSchema csvSerializationSchema =
+                CsvSerializationSchema.builder()
+                        .seaTunnelRowType(schema)
+                        .delimiter(delimiter)
+                        .numberFormat(numberFormat)
+                        .build();
+        SeaTunnelRow row = new SeaTunnelRow(new Object[] {d, decimal});
+
+        assertEquals("8.8888888,123456789.987", new String(csvSerializationSchema.serialize(row)));
+    }
+
+    @Test
+    public void testSerializationWithLanguageDe() throws ParseException {
+        String delimiter = ",";
+
+        SeaTunnelRowType schema =
+                new SeaTunnelRowType(
+                        new String[] {"double", "decimal"},
+                        new SeaTunnelDataType[] {BasicType.DOUBLE_TYPE, new DecimalType(30, 8)});
+        String d = "8,8888888";
+        String decimal = "123.456.789,987";
+        Locale locale = new Locale.Builder().setLanguage("de").build();
+        NumberFormat numberFormat = NumberFormat.getInstance(locale);
+        CsvSerializationSchema csvSerializationSchema =
+                CsvSerializationSchema.builder()
+                        .seaTunnelRowType(schema)
+                        .delimiter(delimiter)
+                        .numberFormat(numberFormat)
+                        .build();
+        SeaTunnelRow row = new SeaTunnelRow(new Object[] {d, decimal});
+
+        assertEquals("8.8888888,123456789.987", new String(csvSerializationSchema.serialize(row)));
     }
 
     @Test

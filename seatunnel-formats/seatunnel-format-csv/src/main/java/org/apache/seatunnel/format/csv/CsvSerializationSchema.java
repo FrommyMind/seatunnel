@@ -38,8 +38,11 @@ import org.apache.commons.csv.QuoteMode;
 import lombok.NonNull;
 
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -57,6 +60,7 @@ public class CsvSerializationSchema implements SerializationSchema {
     private final Charset charset;
     private final String nullValue;
     private final CsvStringQuoteMode quoteMode;
+    private final NumberFormat numberFormat;
 
     private CsvSerializationSchema(
             @NonNull SeaTunnelRowType seaTunnelRowType,
@@ -66,7 +70,8 @@ public class CsvSerializationSchema implements SerializationSchema {
             TimeUtils.Formatter timeFormatter,
             Charset charset,
             String nullValue,
-            CsvStringQuoteMode quoteMode) {
+            CsvStringQuoteMode quoteMode,
+            NumberFormat numberFormat) {
         this.seaTunnelRowType = seaTunnelRowType;
         this.separators = separators;
         this.dateFormatter = dateFormatter;
@@ -75,6 +80,7 @@ public class CsvSerializationSchema implements SerializationSchema {
         this.charset = charset;
         this.nullValue = nullValue;
         this.quoteMode = quoteMode;
+        this.numberFormat = numberFormat;
     }
 
     public static Builder builder() {
@@ -91,6 +97,7 @@ public class CsvSerializationSchema implements SerializationSchema {
         private Charset charset = StandardCharsets.UTF_8;
         private String nullValue = "";
         private CsvStringQuoteMode quoteMode = CsvStringQuoteMode.MINIMAL;
+        private NumberFormat numberFormat;
 
         private Builder() {}
 
@@ -139,6 +146,11 @@ public class CsvSerializationSchema implements SerializationSchema {
             return this;
         }
 
+        public Builder numberFormat(NumberFormat numberFormat) {
+            this.numberFormat = numberFormat;
+            return this;
+        }
+
         public CsvSerializationSchema build() {
             return new CsvSerializationSchema(
                     seaTunnelRowType,
@@ -148,7 +160,8 @@ public class CsvSerializationSchema implements SerializationSchema {
                     timeFormatter,
                     charset,
                     nullValue,
-                    quoteMode);
+                    quoteMode,
+                    numberFormat);
         }
     }
 
@@ -161,12 +174,17 @@ public class CsvSerializationSchema implements SerializationSchema {
         Object[] fields = element.getFields();
         String[] strings = new String[fields.length];
         for (int i = 0; i < fields.length; i++) {
-            strings[i] = convert(fields[i], seaTunnelRowType.getFieldType(i), 0);
+            try {
+                strings[i] = convert(fields[i], seaTunnelRowType.getFieldType(i), 0);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
         }
         return String.join(separators[0], strings).getBytes(charset);
     }
 
-    private String convert(Object field, SeaTunnelDataType<?> fieldType, int level) {
+    private String convert(Object field, SeaTunnelDataType<?> fieldType, int level)
+            throws ParseException {
         if (field == null) {
             return nullValue;
         }
@@ -179,6 +197,10 @@ public class CsvSerializationSchema implements SerializationSchema {
             case SMALLINT:
             case BIGINT:
             case DECIMAL:
+                if (numberFormat != null) {
+                    return BigDecimal.valueOf(numberFormat.parse(field.toString()).doubleValue())
+                            .toString();
+                }
                 return field.toString();
             case STRING:
                 byte[] bytes = field.toString().getBytes(StandardCharsets.UTF_8);
@@ -198,7 +220,14 @@ public class CsvSerializationSchema implements SerializationSchema {
             case ARRAY:
                 SeaTunnelDataType<?> elementType = ((ArrayType<?, ?>) fieldType).getElementType();
                 return Arrays.stream((Object[]) field)
-                        .map(f -> convert(f, elementType, level + 1))
+                        .map(
+                                f -> {
+                                    try {
+                                        return convert(f, elementType, level + 1);
+                                    } catch (ParseException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                })
                         .collect(Collectors.joining(separators[level + 1]));
             case MAP:
                 SeaTunnelDataType<?> keyType = ((MapType<?, ?>) fieldType).getKeyType();
@@ -206,14 +235,19 @@ public class CsvSerializationSchema implements SerializationSchema {
                 return ((Map<Object, Object>) field)
                         .entrySet().stream()
                                 .map(
-                                        entry ->
-                                                String.join(
+                                        entry -> {
+                                            try {
+                                                return String.join(
                                                         separators[level + 2],
                                                         convert(entry.getKey(), keyType, level + 1),
                                                         convert(
                                                                 entry.getValue(),
                                                                 valueType,
-                                                                level + 1)))
+                                                                level + 1));
+                                            } catch (ParseException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        })
                                 .collect(Collectors.joining(separators[level + 1]));
             case ROW:
                 Object[] fields = ((SeaTunnelRow) field).getFields();
